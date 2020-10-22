@@ -1,0 +1,152 @@
+/*
+ * RasPi SPI Flash storage driver
+ *
+ * Copyright (C) 2020, HENSOLDT Cyber GmbH
+ */
+
+import <if_OS_Timer.camkes>;
+import <if_OS_Storage.camkes>;
+
+//------------------------------------------------------------------------------
+// Component declaration
+
+#define DECLARE_COMPONENT_SYSTIMER_HW(_type_hw_) \
+    \
+    component systimer_ ## _type_hw_ { \
+        hardware; \
+        dataport Buf systimerBaseReg; \
+    }
+
+#define DECLARE_COMPONENT_MAILBOX_HW(_type_hw_) \
+    \
+    component mailbox_ ## _type_hw_ { \
+        hardware; \
+        dataport Buf mailboxBaseReg; \
+    }
+
+#define DECLARE_COMPONENT_SDHOST_HW(_type_hw_) \
+    \
+    component sdBase_ ## _type_hw_ { \
+        hardware; \
+        dataport Buf sdBaseReg; \
+        emits DataAvailable sdBaseIrq; \
+    }
+
+#define DECLARE_COMPONENT_EMMC_HW(_type_hw_) \
+    \
+    component emmcBase_ ## _type_hw_ { \
+        hardware; \
+        dataport Buf emmcBaseReg; \
+        emits DataAvailable emmcBaseIrq; \
+    }
+
+#define DECLARE_COMPONENT_RPI_SD_DRV(_type_) \
+    component _type_ { \
+        dataport Buf mailboxBaseReg; \
+        dataport Buf sdBaseReg; \
+        consumes DataAvailable sdBaseIrq; \
+        dataport Buf emmcBaseReg; \
+        consumes DataAvailable emmcBaseIrq; \
+        dataport Buf systimerBaseReg; \
+        \
+        uses      if_OS_Timer                timeServer_rpc; \
+        consumes    TimerReady               timeServer_notify; \
+        \
+        provides  if_OS_Storage              storage_rpc; \
+        dataport  Buf                        storage_port; \
+        \
+        has mutex sd_mutex; \
+    }
+
+
+//------------------------------------------------------------------------------
+// Instance declaration
+
+#define DECLARE_AND_CONNECT_INSTANCE_SD_DRV_HW( \
+    _type_hw_mb_, \
+    _inst_hw_mb_, \
+    _type_hw_sd_, \
+    _inst_hw_sd_, \
+    _type_hw_emmc_, \
+    _inst_hw_emmc_, \
+    _type_hw_st_, \
+    _inst_hw_st_, \
+    _type_drv_, \
+    _inst_drv_) \
+    \
+    component   mailbox_ ## _type_hw_mb_   _inst_hw_mb_; \
+    component   sdBase_ ## _type_hw_sd_   _inst_hw_sd_; \
+    component   emmcBase_ ## _type_hw_emmc_   _inst_hw_emmc_; \
+    component   systimer_ ## _type_hw_st_   _inst_hw_st_; \
+    component   _type_drv_          _inst_drv_; \
+    \
+    connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_mb_ ## _mmio( \
+                from _inst_drv_.mailboxBaseReg, \
+                to   _inst_hw_mb_.mailboxBaseReg); \
+    \
+    connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_sd_ ## _mmio( \
+                from _inst_drv_.sdBaseReg, \
+                to   _inst_hw_sd_.sdBaseReg); \
+    \
+    connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_emmc_ ## _mmio( \
+                from _inst_drv_.emmcBaseReg, \
+                to   _inst_hw_emmc_.emmcBaseReg); \
+    \
+    connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_st_ ## _mmio( \
+                from _inst_drv_.systimerBaseReg, \
+                to   _inst_hw_st_.systimerBaseReg); \
+    \
+    connection  seL4HardwareInterrupt       _inst_drv_ ## _inst_hw_sd_ ## _irq( \
+                from _inst_hw_sd_.sdBaseIrq, \
+                to   _inst_drv_.sdBaseIrq); \
+    \
+    connection  seL4HardwareInterrupt       _inst_drv_ ## _inst_hw_emmc_ ## _irq( \
+                from _inst_hw_emmc_.emmcBaseIrq, \
+                to   _inst_drv_.emmcBaseIrq); \
+
+//------------------------------------------------------------------------------
+// Instance configuration
+
+#define CONFIGURE_INSTANCE_SYSTIMER_HW( \
+            _inst_hw_, \
+            _phys_addr_, \
+            _size_) \
+    \
+    _inst_hw_.systimerBaseReg_paddr  = _phys_addr_; \
+    _inst_hw_.systimerBaseReg_size   = _size_; \
+
+#define CONFIGURE_INSTANCE_MAILBOX_HW( \
+            _inst_hw_, \
+            _phys_addr_, \
+            _size_) \
+    \
+    _inst_hw_.mailboxBaseReg_paddr  = _phys_addr_; \
+    _inst_hw_.mailboxBaseReg_size   = _size_; \
+
+/* SD Host interrupt is marked as 24 (0x18) and 2 (0x02), the latter one works, but according to line to the seL4 BCM2837 interrupt handling, the normal IRQs start from 64 => 64 + 2 = 66 */ \
+#define CONFIGURE_INSTANCE_SDHOST_HW( \
+            _inst_hw_, \
+            _phys_addr_, \
+            _size_, \
+            _irq_number_) \
+    \
+    _inst_hw_.sdBaseReg_paddr  = _phys_addr_; \
+    _inst_hw_.sdBaseReg_size   = _size_; \
+    _inst_hw_.sdBaseIrq_irq_number   = _irq_number_; \
+
+/* EMMC interrupt is marked as 30 (0x1D), but according to line to the seL4 BCM2837 interrupt handling, the normal IRQs start from 64 => 64 + 30 = 94 */ \
+#define CONFIGURE_INSTANCE_EMMC_HW( \
+            _inst_hw_, \
+            _phys_addr_, \
+            _size_, \
+            _irq_number_) \
+    \
+    _inst_hw_.emmcBaseReg_paddr  = _phys_addr_; \
+    _inst_hw_.emmcBaseReg_size   = _size_; \
+    _inst_hw_.emmcBaseIrq_irq_number   = _irq_number_; \
+
+#define CONFIGURE_INSTANCE_SD_DRV( \
+            _inst_drv_, \
+            _dma_size_) \
+    \
+    _inst_drv_.dma_pool  = _dma_size_; 
