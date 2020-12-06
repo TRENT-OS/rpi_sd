@@ -26,9 +26,13 @@
 extern "C" {
 #endif
 
-u32 read32 (u32 nAddress);
+// u64 read32 (u64 nAddress);
 
-void write32 (u32 nAddress, u32 nValue);
+// void write32 (u64 nAddress, u64 nValue);
+
+u32 read32 (uintptr nAddress);
+
+void write32 (uintptr nAddress, u32 nValue);
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,9 @@
 #ifndef _circle_sysconfig_h
 #define _circle_sysconfig_h
 
-#define RASPPI 3
+#define RASPPI 4
+#define AARCH 64
+// #define USE_SDHOST
 ///////////////////////////////////////////////////////////////////////
 //
 // Memory

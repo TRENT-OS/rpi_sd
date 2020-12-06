@@ -18,12 +18,12 @@ cmake_minimum_required(VERSION 3.17)
 #   LIBS <lib_1> <lib_2> ...
 #     additional libraries. At least a TimeServer client library is required
 #
-function(DeclareCAmkESComponent_RPI_SD_DRV name)
+function(RPi_SD_DeclareCAmkESComponent name)
 
     cmake_parse_arguments(
         PARSE_ARGV
         1
-        RPI_SD
+        RPi_SD
         ""
         ""
         "LIBS"
@@ -36,13 +36,13 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/include
         SOURCES
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/RPI_SD.c
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/RPi_SD.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/emmc.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/bcm2837_gpio.c
 
             # For EMMC mode 
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/util.c
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/synchronize.c
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/synchronize64.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/memio.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/environment.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/mailboxInterface.c 
@@ -57,8 +57,8 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
             -Werror
         LIBS
             os_core_api
-            os_libs
-            ${RPI_SD_LIBS}
+            lib_debug
+            ${RPi_SD_LIBS}
     )
 
 endfunction()

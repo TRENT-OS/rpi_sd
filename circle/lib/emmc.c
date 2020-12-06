@@ -41,8 +41,8 @@
 #include <circleos.h>
 #ifndef USE_SDHOST
 	#include <circleenv/bcm2835.h>
-	// #include <circle/bcm2711.h>
-	// #include <circle/bcmpropertytags.h>
+	#include <circleenv/bcm2711.h>
+	#include <circleenv/bcmpropertytags.h>
 	#include <circleenv/synchronize.h>
 	#include <circleenv/machineinfo.h>
 	#include <circleenv/memio.h>
@@ -526,15 +526,18 @@ boolean emmc_initialize (void)
 {
 #ifndef USE_SDHOST
 #if RASPPI >= 4
-	// disable 1.8V supply
-	CBcmPropertyTags Tags;
-	TPropertyTagGPIOState GPIOState;
-	GPIOState.nGPIO = EXP_GPIO_BASE + 4;
-	GPIOState.nState = 0;
-	if (!Tags.GetTag (PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8))
-	{
-		return FALSE;
-	}
+	// // disable 1.8V supply
+	// TBcmPropertyTags Tags;
+	// BcmPropertyTags (&Tags);
+	// // TPropertyTag Tags;
+	// TPropertyTagGPIOState GPIOState;
+	// GPIOState.nGPIO = EXP_GPIO_BASE + 4;
+	// GPIOState.nState = 0;
+	// if (!BcmPropertyTagsGetTag (&Tags,PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8))
+	// {
+	// 	return FALSE;
+	// }
+	SetGPIOState(0);
 
 	usDelay (5000);
 #endif
@@ -2016,7 +2019,6 @@ int CardInit (void)
 	assert (sizeof (sd_acommands) == (64 * sizeof(u32)));
 
 #ifndef USE_SDHOST
-
 	// Read the controller version
 	u32 ver = read32 (EMMC_SLOTISR_VER);
 	u32 sdversion = (ver >> 16) & 0xff;
@@ -2393,6 +2395,7 @@ off_t emmc_capacity(void){
     // read_bl_len   : csd[83:80] - the *maximum* read block length
 
     int csd_structure = ext_bits(csd, 127, 126);
+	// printf("\n\n\n CSD structure: %d \n\n\n",csd_structure);
 
     switch (csd_structure) {
         case 0:

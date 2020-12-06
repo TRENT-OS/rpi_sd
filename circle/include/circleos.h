@@ -57,8 +57,8 @@ extern "C" {
 #define DMA_PAGE_SIZE	4096
 #define DMA_ALIGNEMENT 	4096
 
-void *malloc (unsigned nSize);		// result must be 4-byte aligned
-void free (void *pBlock);
+// void *malloc (unsigned nSize);		// result must be 4-byte aligned
+// void free (void *pBlock);
 
 void *dma_alloc (unsigned nSize, unsigned alignement);
 void dma_free (void *pBlock, unsigned alignement);
@@ -113,6 +113,8 @@ int SetSDHostClock (uint32_t *msg, size_t length);
 int GetMachineModel (void);
 
 unsigned GetClockTicks (void);
+
+int SetGPIOState (uint32_t state);
 //
 // Logging
 //

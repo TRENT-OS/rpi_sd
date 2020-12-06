@@ -19,6 +19,7 @@
 //
 #include <circleenv/timer.h>
 #include <circleenv/bcm2835.h>
+#include <circleenv/bcm2711.h>
 #include <circleenv/memio.h>
 #include <circleenv/synchronize.h>
 #include <circleenv/sysconfig.h>

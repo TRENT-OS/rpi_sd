@@ -4,7 +4,7 @@
 #include <circle/emmc.h>
 #include "OS_Error.h"
 #include "OS_Dataport.h"
-#include "LibDebug/Debug.h"
+#include "lib_debug/Debug.h"
 #include "environment.h"
 #include <circleos.h>
 #include <circle/bcm2837_sdhost.h>
@@ -26,7 +26,10 @@ isValidEMMCArea(
     off_t const size)
 {
     off_t const end = offset + size;
-    return ( (offset >= 0) && (size >= 0) && (end >= offset) && (end <= emmc_capacity()));
+    return ( (offset >= 0) && (offset % emmc_block_size() == 0) && 
+             (size >= 0) && (size % emmc_block_size() == 0) && 
+             (end >= offset) && (end <= emmc_capacity())
+           );
 }
 
 // as interrupts can not be connected in post_init, we call this function the first time we actually need it
@@ -149,7 +152,7 @@ storage_rpc_write(
         // ret = disk_read(&(ctx.spi_sd_ctx),block,sector,1);
         ret = DoRead(block,emmc_block_size(),sector);
         if (ret < 0){
-            Debug_LOG_ERROR( "disk_read() failed => emmc_write() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+            Debug_LOG_ERROR( "disk_read() failed => emmc_write() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                 offset, offset, bytesWritten, bytesWritten, ret);
             return OS_ERROR_GENERIC;
         }
@@ -158,7 +161,7 @@ storage_rpc_write(
         // ret = disk_write(&(ctx.spi_sd_ctx),block,sector,1);
         ret = DoWrite(block,emmc_block_size(),sector);
         if (ret < 0){
-            Debug_LOG_ERROR( "disk_write() failed => emmc_write() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+            Debug_LOG_ERROR( "disk_write() failed => emmc_write() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                 offset, offset, bytesWritten, bytesWritten, ret);
             return OS_ERROR_GENERIC;
         }
@@ -174,7 +177,7 @@ storage_rpc_write(
             // ret = disk_write(&(ctx.spi_sd_ctx),block,++sector,1);
             ret = DoWrite(block,emmc_block_size(),++sector);
             if (ret < 0){
-                Debug_LOG_ERROR( "disk_write() failed => SPISD_write() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+                Debug_LOG_ERROR( "disk_write() failed => SPISD_write() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                  offset, offset, bytesWritten, bytesWritten, ret);
                 return OS_ERROR_GENERIC;
             }
@@ -189,7 +192,7 @@ storage_rpc_write(
             // ret = disk_read(&(ctx.spi_sd_ctx),block,++sector,1);
             ret = DoRead(block,emmc_block_size(),++sector);
             if (ret < 0){
-                Debug_LOG_ERROR( "disk_read() failed => emmc_write() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+                Debug_LOG_ERROR( "disk_read() failed => emmc_write() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                  offset, offset, bytesWritten, bytesWritten, ret);
                 return OS_ERROR_GENERIC;
             }
@@ -197,7 +200,7 @@ storage_rpc_write(
             // ret = disk_write(&(ctx.spi_sd_ctx),block,sector,1);
             ret = DoWrite(block,emmc_block_size(),sector);
             if (ret < 0){
-                Debug_LOG_ERROR( "disk_write() failed => emmc_write() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+                Debug_LOG_ERROR( "disk_write() failed => emmc_write() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                  offset, offset, bytesWritten, bytesWritten, ret);
                 return OS_ERROR_GENERIC;
             }
@@ -264,7 +267,7 @@ storage_rpc_read(
         // ret = disk_read(&(ctx.spi_sd_ctx),block,sector,1);
         ret = DoRead(block,emmc_block_size(),sector);
         if (ret < 0){
-            Debug_LOG_ERROR( "disk_read() failed => emmc_read() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+            Debug_LOG_ERROR( "disk_read() failed => emmc_read() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                 offset, offset, bytesRead, bytesRead, ret);
             return OS_ERROR_GENERIC;
         }
@@ -280,7 +283,7 @@ storage_rpc_read(
             // ret = disk_read(&(ctx.spi_sd_ctx),block,++sector,1);
             ret = DoRead(block,emmc_block_size(),++sector);
             if (ret < 0){
-                Debug_LOG_ERROR( "disk_read() failed => emmc_read() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+                Debug_LOG_ERROR( "disk_read() failed => emmc_read() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                  offset, offset, bytesRead, bytesRead, ret);
                 return OS_ERROR_GENERIC;
             }
@@ -295,7 +298,7 @@ storage_rpc_read(
             // ret = disk_read(&(ctx.spi_sd_ctx),block,++sector,1);
             ret = DoRead(block,emmc_block_size(),++sector);
             if (ret < 0){
-                Debug_LOG_ERROR( "disk_read() failed => emmc_read() failed, offset %jd (0x%jx), size %zu (0x%zx), code %d",
+                Debug_LOG_ERROR( "disk_read() failed => emmc_read() failed, offset %jd (0x%jx), size %d (0x%x), code %d",
                                  offset, offset, bytesRead, bytesRead, ret);
                 return OS_ERROR_GENERIC;
             }
@@ -334,7 +337,7 @@ storage_rpc_erase(
         // the client did a bogus request, it knows the data port size and
         // never ask for more data
         Debug_LOG_ERROR(
-            "size %lld exceeds dataport size %zu",
+            "size %ld exceeds dataport size %zu",
             size,
             dataport_size );
 

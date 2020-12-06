@@ -147,7 +147,7 @@ void SpinLockAcquire (TSpinLock *pThis)
 	if (pThis->m_nTargetLevel >= IRQ_LEVEL)
 	{
 		//EnterCritical (spinlock->m_nTargetLevel);
-		EnterCritical ();
+		EnterCritical (IRQ_LEVEL);
 	}
 }
 

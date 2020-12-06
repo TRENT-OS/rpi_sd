@@ -20,6 +20,7 @@
 #include <circleenv/interrupt.h>
 #include <circleenv/synchronize.h>
 #include <circleenv/bcm2835.h>
+#include <circleenv/bcm2711.h>
 #include <circleenv/memio.h>
 #include <circleenv/types.h>
 // #include <circleenv/assert.h>

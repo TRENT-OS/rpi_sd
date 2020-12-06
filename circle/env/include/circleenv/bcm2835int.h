@@ -24,7 +24,7 @@
 #define _circle_bcm2835int_h
 
 #if RASPPI >= 4
-	#include <circle/bcm2711int.h>
+	#include "bcm2711int.h"
 #else
 
 // IRQs

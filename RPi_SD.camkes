@@ -10,21 +10,21 @@ import <if_OS_Storage.camkes>;
 //------------------------------------------------------------------------------
 // Component declaration
 
-#define DECLARE_COMPONENT_SYSTIMER_HW(_type_hw_) \
+#define SYSTIMER_COMPONENT_DEFINE(_type_hw_) \
     \
     component systimer_ ## _type_hw_ { \
         hardware; \
         dataport Buf systimerBaseReg; \
     }
 
-#define DECLARE_COMPONENT_MAILBOX_HW(_type_hw_) \
+#define MAILBOX_COMPONENT_DEFINE(_type_hw_) \
     \
     component mailbox_ ## _type_hw_ { \
         hardware; \
         dataport Buf mailboxBaseReg; \
     }
 
-#define DECLARE_COMPONENT_SDHOST_HW(_type_hw_) \
+#define SDHOST_COMPONENT_DEFINE(_type_hw_) \
     \
     component sdBase_ ## _type_hw_ { \
         hardware; \
@@ -32,7 +32,7 @@ import <if_OS_Storage.camkes>;
         emits DataAvailable sdBaseIrq; \
     }
 
-#define DECLARE_COMPONENT_EMMC_HW(_type_hw_) \
+#define EMMC_COMPONENT_DEFINE(_type_hw_) \
     \
     component emmcBase_ ## _type_hw_ { \
         hardware; \
@@ -40,7 +40,7 @@ import <if_OS_Storage.camkes>;
         emits DataAvailable emmcBaseIrq; \
     }
 
-#define DECLARE_COMPONENT_RPI_SD_DRV(_type_) \
+#define RPi_SD_COMPONENT_DEFINE(_type_) \
     component _type_ { \
         dataport Buf mailboxBaseReg; \
         dataport Buf sdBaseReg; \

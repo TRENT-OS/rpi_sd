@@ -144,6 +144,17 @@ typedef struct TPropertyTemperature
 }
 TPropertyTemperature;
 
+typedef struct TPropertyTagGPIOState
+{
+	TPropertyTag	Tag;
+	u32		nGPIO;
+	#define EXP_GPIO_BASE		128
+	#define EXP_GPIO_NUM		8
+	u32		nState;
+}
+TPropertyTagGPIOState;
+
+
 typedef struct TPropertyTagEDIDBlock
 {
 	TPropertyTag	Tag;

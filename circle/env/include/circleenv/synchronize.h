@@ -1,8 +1,8 @@
 //
 // synchronize.h
 //
-// USPi - An USB driver for Raspberry Pi written in C
-// Copyright (C) 2014-2015  R. Stange <rsta2@o2online.de>
+// Circle - A C++ bare metal environment for Raspberry Pi
+// Copyright (C) 2014-2020  R. Stange <rsta2@o2online.de>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,11 +17,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-#ifndef _synchronize_h
-#define _synchronize_h
+#ifndef _circle_synchronize_h
+#define _circle_synchronize_h
 
-#include "./macros.h"
-#include "./types.h"
+#include "sysconfig.h"
+#if AARCH == 64
+	#include "synchronize64.h"
+#else
+
+#include "macros.h"
+#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,9 +39,95 @@ extern "C" {
 #define IRQ_LEVEL		1		// IRQs disabled, FIQs enabled
 #define FIQ_LEVEL		2		// IRQs and FIQs disabled
 
+unsigned CurrentExecutionLevel (void);
+
+//
+// Interrupt control
+//
+#define	EnableIRQs()		asm volatile ("cpsie i")
+#define	DisableIRQs()		asm volatile ("cpsid i")
+#define	EnableInterrupts()	EnableIRQs()			// deprecated
+#define	DisableInterrupts()	DisableIRQs()			// deprecated
+
+#define	EnableFIQs()		asm volatile ("cpsie f")
+#define	DisableFIQs()		asm volatile ("cpsid f")
+
+// EnterCritical() can be nested with same or increasing nTargetLevel
+void EnterCritical (unsigned nTargetLevel); // default: IRQ_LEVEL
+void LeaveCritical (void);
+
+#if RASPPI == 1
+
+//
+// Cache control
+//
+#define DATA_CACHE_LINE_LENGTH_MIN	32	// from CTR
+#define DATA_CACHE_LINE_LENGTH_MAX	32
+
+#define InvalidateInstructionCache()	\
+				asm volatile ("mcr p15, 0, %0, c7, c5,  0" : : "r" (0) : "memory")
+#define FlushPrefetchBuffer()	asm volatile ("mcr p15, 0, %0, c7, c5,  4" : : "r" (0) : "memory")
+#define FlushBranchTargetCache()	\
+				asm volatile ("mcr p15, 0, %0, c7, c5,  6" : : "r" (0) : "memory")
+
+// NOTE: Data cache operations include a DataSyncBarrier
+#define InvalidateDataCache()	asm volatile ("mcr p15, 0, %0, c7, c6,  0\n" \
+					      "mcr p15, 0, %0, c7, c10, 4\n" : : "r" (0) : "memory")
+#define CleanDataCache()	asm volatile ("mcr p15, 0, %0, c7, c10, 0\n" \
+					      "mcr p15, 0, %0, c7, c10, 4\n" : : "r" (0) : "memory")
+
+void CleanAndInvalidateDataCacheRange (u32 nAddress, u32 nLength) MAXOPT;
+
+void SyncDataAndInstructionCache (void);
+
 //
 // Barriers
 //
+#define DataSyncBarrier()	asm volatile ("mcr p15, 0, %0, c7, c10, 4" : : "r" (0) : "memory")
+#define DataMemBarrier() 	asm volatile ("mcr p15, 0, %0, c7, c10, 5" : : "r" (0) : "memory")
+
+#define InstructionSyncBarrier() FlushPrefetchBuffer()
+#define InstructionMemBarrier()	FlushPrefetchBuffer()
+
+// According to the "BCM2835 ARM Peripherals" document pg. 7 the BCM2835
+// requires to insert barriers before writing and after reading to/from
+// a peripheral for in-order processing of data transferred on the AXI bus.
+#define PeripheralEntry()	DataSyncBarrier()
+#define PeripheralExit()	DataMemBarrier()
+
+#elif RASPPI <= 3
+
+//
+// Cache control
+//
+#define DATA_CACHE_LINE_LENGTH_MIN	64	// from CTR
+#define DATA_CACHE_LINE_LENGTH_MAX	64
+
+#define InvalidateInstructionCache()	\
+				asm volatile ("mcr p15, 0, %0, c7, c5,  0" : : "r" (0) : "memory")
+#define FlushPrefetchBuffer()	asm volatile ("isb" ::: "memory")
+#define FlushBranchTargetCache()	\
+				asm volatile ("mcr p15, 0, %0, c7, c5,  6" : : "r" (0) : "memory")
+
+// cache-v7.S
+//
+// NOTE: Data cache operations include a DataSyncBarrier
+void InvalidateDataCacheL1Only (void);
+void InvalidateDataCache (void);
+void CleanDataCache (void);
+void CleanAndInvalidateDataCacheRange (u32 nAddress, u32 nLength);
+
+void SyncDataAndInstructionCache (void);
+
+//
+// Barriers
+//
+#define DataSyncBarrier()	asm volatile ("dsb" ::: "memory")
+#define DataMemBarrier() 	asm volatile ("dmb" ::: "memory")
+
+#define InstructionSyncBarrier() asm volatile ("isb" ::: "memory")
+#define InstructionMemBarrier()	asm volatile ("isb" ::: "memory")
+
 #define PeripheralEntry()	((void) 0)	// ignored here
 #define PeripheralExit()	((void) 0)
 
@@ -47,70 +138,28 @@ extern "C" {
 #define WaitForEvent()		asm volatile ("wfe")
 #define SendEvent()		asm volatile ("sev")
 
-//
-// Interrupt control
-//
-#define	EnableInterrupts()	__asm volatile ("cpsie i")
-#define	DisableInterrupts()	__asm volatile ("cpsid i")
-
-void EnterCritical (void);
-void LeaveCritical (void);
-
-#if RASPPI == 1
-
-//
-// Cache control
-//
-#define InvalidateInstructionCache()	\
-				__asm volatile ("mcr p15, 0, %0, c7, c5,  0" : : "r" (0) : "memory")
-#define FlushPrefetchBuffer()	__asm volatile ("mcr p15, 0, %0, c7, c5,  4" : : "r" (0) : "memory")
-#define FlushBranchTargetCache()	\
-				__asm volatile ("mcr p15, 0, %0, c7, c5,  6" : : "r" (0) : "memory")
-#define InvalidateDataCache()	__asm volatile ("mcr p15, 0, %0, c7, c6,  0" : : "r" (0) : "memory")
-#define CleanDataCache()	__asm volatile ("mcr p15, 0, %0, c7, c10, 0" : : "r" (0) : "memory")
-
-//
-// Barriers
-//
-#define DataSyncBarrier()	__asm volatile ("mcr p15, 0, %0, c7, c10, 4" : : "r" (0) : "memory")
-#define DataMemBarrier() 	__asm volatile ("mcr p15, 0, %0, c7, c10, 5" : : "r" (0) : "memory")
-
-#define InstructionSyncBarrier() FlushPrefetchBuffer()
-#define InstructionMemBarrier()	FlushPrefetchBuffer()
-
-#else
-
-//
-// Cache control
-//
-#define InvalidateInstructionCache()	\
-				__asm volatile ("mcr p15, 0, %0, c7, c5,  0" : : "r" (0) : "memory")
-#define FlushPrefetchBuffer()	__asm volatile ("isb" ::: "memory")
-#define FlushBranchTargetCache()	\
-				__asm volatile ("mcr p15, 0, %0, c7, c5,  6" : : "r" (0) : "memory")
-
-void InvalidateDataCache (void) MAXOPT;
-void CleanDataCache (void) MAXOPT;
-
-void InvalidateDataCacheRange (u32 nAddress, u32 nLength) MAXOPT;
-void CleanDataCacheRange (u32 nAddress, u32 nLength) MAXOPT;
-void CleanAndInvalidateDataCacheRange (u32 nAddress, u32 nLength) MAXOPT;
-
-//
-// Barriers
-//
-#define DataSyncBarrier()	__asm volatile ("dsb" ::: "memory")
-#define DataMemBarrier() 	__asm volatile ("dmb" ::: "memory")
-
-#define InstructionSyncBarrier() __asm volatile ("isb" ::: "memory")
-#define InstructionMemBarrier()	__asm volatile ("isb" ::: "memory")
-
 #endif
 
-#define CompilerBarrier()	__asm volatile ("" ::: "memory")
+#define CompilerBarrier()	asm volatile ("" ::: "memory")
+
+//
+// Cache alignment
+//
+#define CACHE_ALIGN			ALIGN (DATA_CACHE_LINE_LENGTH_MAX)
+
+#define CACHE_ALIGN_SIZE(type, num)	(((  ((num)*sizeof (type) - 1)		\
+					   | (DATA_CACHE_LINE_LENGTH_MAX-1)	\
+					  ) + 1) / sizeof (type))
+
+#define IS_CACHE_ALIGNED(ptr, size)	(   ((uintptr) (ptr) & (DATA_CACHE_LINE_LENGTH_MAX-1)) == 0 \
+					 && ((size) & (DATA_CACHE_LINE_LENGTH_MAX-1)) == 0)
+
+#define DMA_BUFFER(type, name, num)	type name[CACHE_ALIGN_SIZE (type, num)] CACHE_ALIGN
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif

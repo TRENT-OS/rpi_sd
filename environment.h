@@ -44,6 +44,16 @@ typedef struct PropertyTagClockRate
 }
 PropertyTagClockRate;
 
+typedef struct PropertyTagGPIOState
+{
+	MailboxInterface_PropertyTag	Tag;
+	uint32_t		nGPIO;
+	#define EXP_GPIO_BASE		128
+	#define EXP_GPIO_NUM		8
+	uint32_t		nState;
+}
+PropertyTagGPIOState;
+
 typedef struct PropertyTagBoardModel
 {
 	MailboxInterface_PropertyTag	Tag;

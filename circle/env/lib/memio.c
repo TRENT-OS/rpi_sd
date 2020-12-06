@@ -19,12 +19,24 @@
 //
 #include <circleenv/memio.h>
 
-u32 read32 (u32 nAddress)
+// u64 read32 (u64 nAddress)
+// {
+// 	return *(volatile u64 *) nAddress;
+// }
+
+// void write32 (u64 nAddress, u64 nValue)
+// {
+// 	*(volatile u64 *) nAddress = nValue;
+// }
+
+u32 read32 (uintptr nAddress)
 {
-	return *(volatile u32 *) nAddress;
+	return *(u32 volatile *) nAddress;
+	// return *(volatile u32 *) nAddress;
 }
 
-void write32 (u32 nAddress, u32 nValue)
+void write32 (uintptr nAddress, u32 nValue)
 {
-	*(volatile u32 *) nAddress = nValue;
+	*(u32 volatile *) nAddress = nValue;
+	// *(volatile u32 *) nAddress = nValue;
 }

@@ -8,6 +8,7 @@
 
 #include <circleos.h>
 #include <circleenv/bcm2835.h>
+#include <circleenv/bcm2711.h>
 #include <circleenv/synchronize.h>
 
 #include <camkes.h>
@@ -30,8 +31,8 @@
 #define MAILBOX_STATUS_FULL     0x80000000
 
 /* Private function prototypes ----------------------------------------------------------------*/
-static uint32_t read32(uint32_t nAddress);
-static void write32(uint32_t nAddress, uint32_t nValue);
+static uint64_t read32(uint64_t nAddress);
+static void write32(uint64_t nAddress, uint64_t nValue);
 void MailboxFlush();
 unsigned MailboxRead(unsigned channel);
 void MailboxWrite(unsigned channel, unsigned nData);
@@ -144,12 +145,12 @@ void MailboxFlush()
 	}
 }
 
-static uint32_t read32(uint32_t nAddress)
+static uint64_t read32(uint64_t nAddress)
 {
-	return *(volatile uint32_t *) nAddress;
+	return *(volatile uint64_t *) nAddress;
 }
 
-static void write32(uint32_t nAddress, uint32_t nValue)
+static void write32(uint64_t nAddress, uint64_t nValue)
 {
-	*(volatile uint32_t *) nAddress = nValue;
+	*(volatile uint64_t *) nAddress = nValue;
 }

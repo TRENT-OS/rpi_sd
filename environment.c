@@ -8,11 +8,12 @@
 
 #include <circleos.h>
 
-#include "LibDebug/Debug.h"
+#include "lib_debug/Debug.h"
 
 #include "environment.h"
 #include "mailboxInterface.h"
 #include <circleenv/bcm2835.h>
+#include <circleenv/bcm2711.h>
 #include <circleenv/synchronize.h>
 #include <circleenv/memio.h>
 
@@ -217,6 +218,21 @@ int SetSDHostClock (uint32_t *msg, size_t length)
 	// memcpy (msg, SetSDHOSTClock.msg, sizeof *msg);
 	memcpy (msg, SetSDHOSTClock.msg, length * 4);
 
+    return 1;
+}
+
+int SetGPIOState (uint32_t state)
+{
+	PropertyTagGPIOState GPIOState;
+	GPIOState.nGPIO = EXP_GPIO_BASE * 4;
+	// GPIOState.nGPIO = EXP_GPIO_NUM;
+	GPIOState.nState = state;
+#define PROPTAG_SET_SET_GPIO_STATE	0x00038041
+	if (!MailboxInterface_getTag(PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8))
+	{
+		Debug_LOG_ERROR("MailboxInterface_getTag() failed.");
+		return 0;
+	}
     return 1;
 }
 

@@ -37,6 +37,7 @@
 // #include <circle/gpiopin.h>
 #include <circleenv/spinlock.h>
 #include <circleenv/bcm2835.h>
+#include <circleenv/bcm2711.h> 
 #include <circleenv/memio.h>
 #include <circleenv/types.h>
 

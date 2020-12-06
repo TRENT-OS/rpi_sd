@@ -26,7 +26,8 @@
 static volatile unsigned s_nCriticalLevel = 0;
 static volatile boolean s_bWereEnabled;
 
-void EnterCritical (void)
+// void EnterCritical (void)
+void EnterCritical (unsigned nTargetLevel)
 {
 	u32 nFlags;
 	__asm volatile ("mrs %0, cpsr" : "=r" (nFlags));

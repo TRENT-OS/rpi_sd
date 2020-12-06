@@ -21,6 +21,7 @@
 #include <circleenv/memio.h>
 #include <circleenv/bcm2835.h>
 #include <circleenv/bcm2836.h>
+#include <circleenv/bcm2711.h>
 #include <circleenv/synchronize.h>
 #include <circleenv/sysconfig.h>
 #include <circleenv/types.h>

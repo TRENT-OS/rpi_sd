@@ -21,6 +21,7 @@
 #define _uspienv_bcmmailbox_h
 
 #include "./bcm2835.h"
+#include "./bcm2711.h"
 
 #ifdef __cplusplus
 extern "C" {
