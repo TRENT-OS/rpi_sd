@@ -59,8 +59,8 @@
 // Configuration options
 //
 
-// #define EMMC_DEBUG
-// #define EMMC_DEBUG2
+#define EMMC_DEBUG
+#define EMMC_DEBUG2
 
 //
 // According to the BCM2835 ARM Peripherals Guide the EMMC STATUS register
@@ -1669,16 +1669,16 @@ int CardReset (void)
 	LogWrite (FromEMMC, USPI_LOG_DEBUG, "card identified: OCR: %04x, 1.8v support: %d, SDHC support: %d", m_card_ocr, m_card_supports_18v, m_card_supports_sdhc);
 #endif
 
-// 	// At this point, we know the card is definitely an SD card, so will definitely
-// 	//  support SDR12 mode which runs at 25 MHz
-// #ifndef USE_SDHOST
-// 	SwitchClockRate (base_clock, SD_CLOCK_NORMAL);
-// #else
-// 	mmc_host_SetClock (SD_CLOCK_NORMAL);
-// #endif
+	// At this point, we know the card is definitely an SD card, so will definitely
+	//  support SDR12 mode which runs at 25 MHz
+#ifndef USE_SDHOST
+	SwitchClockRate (base_clock, SD_CLOCK_NORMAL);
+#else
+	mmc_host_SetClock (SD_CLOCK_NORMAL);
+#endif
 
-// 	// A small wait before the voltage switch
-// 	usDelay (5000);
+	// A small wait before the voltage switch
+	usDelay (5000);
 
 #ifndef USE_SDHOST
 
@@ -1839,14 +1839,14 @@ int CardReset (void)
 //---------------------------------------------------------------------------------------
 	// At this point, we know the card is definitely an SD card, so will definitely
 	//  support SDR12 mode which runs at 25 MHz
-#ifndef USE_SDHOST
-	SwitchClockRate (base_clock, SD_CLOCK_NORMAL);
-#else
-	mmc_host_SetClock (SD_CLOCK_NORMAL);
-#endif
+// #ifndef USE_SDHOST
+// 	SwitchClockRate (base_clock, SD_CLOCK_NORMAL);
+// #else
+// 	mmc_host_SetClock (SD_CLOCK_NORMAL);
+// #endif
 
-	// A small wait before the voltage switch
-	usDelay (5000);
+	// // A small wait before the voltage switch
+	// usDelay (5000);
 //---------------------------------------------------------------------------------------
 	
 	// Calculate the capacity of the card before switching to transfer mode

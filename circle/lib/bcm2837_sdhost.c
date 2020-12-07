@@ -45,7 +45,7 @@
 #include <assert.h>
 #include <circleos.h>
 
-#define SDHOST_DEBUG		0
+#define SDHOST_DEBUG		1
 
 #define FIFO_READ_THRESHOLD     4
 #define FIFO_WRITE_THRESHOLD    4
@@ -152,7 +152,7 @@
 #define pr_err(...)			LogWrite (From, USPI_LOG_ERROR,  ##__VA_ARGS__)
 #define pr_warn(...)		LogWrite (From, USPI_LOG_WARNING,  ##__VA_ARGS__)
 #define pr_info(...)		LogWrite (From, USPI_LOG_NOTICE,  ##__VA_ARGS__)
-#define pr_debug(...)		LogWrite (From, USPI_LOG_DEBUG,  ##__VA_ARGS__)
+#define pr_debug(...)		if(SDHOST_DEBUG) LogWrite (From, USPI_LOG_DEBUG,  ##__VA_ARGS__)
 // #if SDHOST_DEBUG
 // 	#define pr_debug(...)	CLogger::Get ()->Write (From, LogDebug,  ##__VA_ARGS__)
 // #else
@@ -471,8 +471,10 @@ void read_block_pio(void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				ndelay((burst_words - words) *
+				udelay((burst_words - words) *
 				       host->ns_per_fifo_word);
+				// ndelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				continue;
 			} else if (words > copy_words) {
 				words = copy_words;
@@ -552,8 +554,10 @@ void write_block_pio (void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				ndelay((burst_words - words) *
+				udelay((burst_words - words) *
 				       host->ns_per_fifo_word);
+				// ndelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				continue;
 			} else if (words > copy_words) {
 				words = copy_words;
