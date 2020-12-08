@@ -113,6 +113,8 @@ int SetSDHostClock (uint32_t *msg, size_t length);
 int GetMachineModel (void);
 
 unsigned GetClockTicks (void);
+
+uint64_t GetTime(void);
 //
 // Logging
 //

@@ -45,7 +45,7 @@
 #include <assert.h>
 #include <circleos.h>
 
-#define SDHOST_DEBUG		1
+#define SDHOST_DEBUG		0
 
 #define FIFO_READ_THRESHOLD     4
 #define FIFO_WRITE_THRESHOLD    4
@@ -471,8 +471,8 @@ void read_block_pio(void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				udelay((burst_words - words) *
-				       host->ns_per_fifo_word);
+				// udelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				// ndelay((burst_words - words) *
 				//        host->ns_per_fifo_word);
 				continue;
@@ -554,8 +554,8 @@ void write_block_pio (void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				udelay((burst_words - words) *
-				       host->ns_per_fifo_word);
+				// udelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				// ndelay((burst_words - words) *
 				//        host->ns_per_fifo_word);
 				continue;
@@ -564,6 +564,7 @@ void write_block_pio (void)
 			}
 
 			copy_words -= words;
+
 
 			while (words) {
 				write(*(buf++), SDDATA);
@@ -815,6 +816,7 @@ void finish_data (void)
 	}
 	else
 		transfer_complete();
+	
 }
 
 void transfer_complete(void)
@@ -839,6 +841,7 @@ void transfer_complete(void)
 			/* No busy, so poll for completion */
 			if (!host->use_busy)
 				finish_command();
+			
 
 			if (host->delay_after_this_stop)
 				host->stop_time = GetClockTicks () * (1000000U / CLOCKHZ);

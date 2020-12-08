@@ -235,6 +235,10 @@ int GetMachineModel (void)
 
 unsigned GetClockTicks (void)
 {
+	// uint64_t ticks = 0;
+	// TimeServer_getTime(&timer,TimeServer_PRECISION_MSEC,&ticks);
+	// return (unsigned) ticks;
+	
 	DataMemBarrier ();
 
 	unsigned nResult = read32 (ARM_SYSTIMER_CLO);
@@ -242,4 +246,11 @@ unsigned GetClockTicks (void)
 	DataMemBarrier ();
 
 	return nResult;
+}
+
+uint64_t GetTime(void)
+{
+	uint64_t ticks = 0;
+	TimeServer_getTime(&timer,TimeServer_PRECISION_NSEC,&ticks);
+	return ticks;
 }

@@ -59,8 +59,8 @@
 // Configuration options
 //
 
-#define EMMC_DEBUG
-#define EMMC_DEBUG2
+// #define EMMC_DEBUG
+// #define EMMC_DEBUG2
 
 //
 // According to the BCM2835 ARM Peripherals Guide the EMMC STATUS register

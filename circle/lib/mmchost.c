@@ -28,6 +28,8 @@
 // #include <circleenv/assert.h>
 // #include <stdbool.h>
 
+#include <circleos.h>
+
 // static void sg_miter_start (
 // 	sg_mapping_iter_t *sg_miter, 
 // 	void *sg, 
