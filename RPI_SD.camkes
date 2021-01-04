@@ -54,6 +54,8 @@ import <if_OS_Storage.camkes>;
         \
         provides  if_OS_Storage              storage_rpc; \
         dataport  Buf                        storage_port; \
+        \
+        has mutex sd_mutex; \
     }
 
 

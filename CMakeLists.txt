@@ -37,21 +37,18 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/include
         SOURCES
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/RPI_SD.c
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/environment.c
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/mailboxInterface.c 
+            
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/emmc.c
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/mmchost.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/bcm2837_gpio.c
-
-            # For EMMC mode 
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/bcm2837_sdhost.c
+            
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/util.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/synchronize.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/memio.c
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/environment.c
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/mailboxInterface.c 
-
-            # Additional files for SDHost mode
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/spinlock.c
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/lib/string.c
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/mmchost.c
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib/bcm2837_sdhost.c
         C_FLAGS
             -Wall
             -Werror

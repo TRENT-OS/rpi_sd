@@ -152,7 +152,7 @@
 #define pr_err(...)			LogWrite (From, USPI_LOG_ERROR,  ##__VA_ARGS__)
 #define pr_warn(...)		LogWrite (From, USPI_LOG_WARNING,  ##__VA_ARGS__)
 #define pr_info(...)		LogWrite (From, USPI_LOG_NOTICE,  ##__VA_ARGS__)
-#define pr_debug(...)		LogWrite (From, USPI_LOG_DEBUG,  ##__VA_ARGS__)
+#define pr_debug(...)		if(SDHOST_DEBUG) LogWrite (From, USPI_LOG_DEBUG,  ##__VA_ARGS__)
 // #if SDHOST_DEBUG
 // 	#define pr_debug(...)	CLogger::Get ()->Write (From, LogDebug,  ##__VA_ARGS__)
 // #else
@@ -351,11 +351,19 @@ void reset_internal (void)
 
 void reset (mmc_host_t *mmc)
 {
-	SpinLockAcquire(spinlock);
+	if (0 != sd_mutex_lock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+	}
+	// SpinLockAcquire(spinlock);
 
 	reset_internal ();
 
-	SpinLockRelease(spinlock);
+	if (0 != sd_mutex_unlock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+	}
+	// SpinLockRelease(spinlock);
 }
 
 void init (int soft)
@@ -471,8 +479,10 @@ void read_block_pio(void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				ndelay((burst_words - words) *
+				udelay((burst_words - words) *
 				       host->ns_per_fifo_word);
+				// ndelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				continue;
 			} else if (words > copy_words) {
 				words = copy_words;
@@ -552,8 +562,10 @@ void write_block_pio (void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				ndelay((burst_words - words) *
+				udelay((burst_words - words) *
 				       host->ns_per_fifo_word);
+				// ndelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				continue;
 			} else if (words > copy_words) {
 				words = copy_words;
@@ -901,9 +913,17 @@ void finish_command (void)
 		/* Wait max 100 ms */
 		unsigned start = GetClockTicks ();
 		while (GetClockTicks () - start < CLOCKHZ/10) {
-			SpinLockRelease(spinlock);
+			if (0 != sd_mutex_unlock())
+			{
+				LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+			}
+			// SpinLockRelease(spinlock);
 			udelay(10);
-			SpinLockAcquire(spinlock);
+			if (0 != sd_mutex_lock())
+			{
+				LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+			}
+			// SpinLockAcquire(spinlock);
 			sdcmd = read(SDCMD);
 			if (!(sdcmd & SDCMD_NEW_FLAG))
 				break;
@@ -1125,7 +1145,11 @@ void block_irq (u32 intmask)
 
 void irq_handler (void)
 {
-	SpinLockAcquire(spinlock);
+	if (0 != sd_mutex_lock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+	}
+	// SpinLockAcquire(spinlock);
 
 	u32 intmask = read(SDHSTS);
 
@@ -1150,7 +1174,11 @@ void irq_handler (void)
 
 	mmiowb();
 
-	SpinLockRelease(spinlock);
+	if (0 != sd_mutex_unlock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+	}
+	// SpinLockRelease(spinlock);
 }
 
 void irq_stub (void *param)
@@ -1203,9 +1231,17 @@ void set_clock (unsigned int clock)
 
 		clock = max(msg[1], msg[2]);
 
-		SpinLockAcquire(spinlock);
+		if (0 != sd_mutex_lock())
+		{
+			LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+		}
+		// SpinLockAcquire(spinlock);
 	} else {
-		SpinLockAcquire(spinlock);
+		if (0 != sd_mutex_lock())
+		{
+			LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+		}
+		// SpinLockAcquire(spinlock);
 
 		if (clock < 100000) {
 			/* Can't stop the clock, but make it as slow as
@@ -1214,7 +1250,11 @@ void set_clock (unsigned int clock)
 			host->cdiv = SDCDIV_MAX_CDIV;
 			write(host->cdiv, SDCDIV);
 			mmiowb();
-			SpinLockRelease(spinlock);
+			if (0 != sd_mutex_unlock())
+			{
+				LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+			}
+			// SpinLockRelease(spinlock);
 			return;
 		}
 
@@ -1278,7 +1318,11 @@ void set_clock (unsigned int clock)
 	host->reset_clock = 0;
 
 	mmiowb();
-	SpinLockRelease(spinlock);
+	if (0 != sd_mutex_unlock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+	}
+	// SpinLockRelease(spinlock);
 }
 
 void request (mmc_host_t *mmc, mmc_request_t *mrq)
@@ -1320,7 +1364,11 @@ void request (mmc_host_t *mmc, mmc_request_t *mrq)
 	if (host->reset_clock)
 	    set_clock(host->clock);
 
-	SpinLockAcquire(spinlock);
+	if (0 != sd_mutex_lock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+	}
+	// SpinLockAcquire(spinlock);
 
 	WARN_ON(host->mrq != 0);
 	host->mrq = mrq;
@@ -1340,7 +1388,11 @@ void request (mmc_host_t *mmc, mmc_request_t *mrq)
 		mrq->cmd->error = -EILSEQ;
 		tasklet_schedule(&host->finish_tasklet);
 		mmiowb();
-		SpinLockRelease(spinlock);
+		if (0 != sd_mutex_unlock())
+		{
+			LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+		}
+		// SpinLockRelease(spinlock);
 		return;
 	}
 
@@ -1366,7 +1418,11 @@ void request (mmc_host_t *mmc, mmc_request_t *mrq)
 
 	mmiowb();
 
-	SpinLockRelease(spinlock);
+	if (0 != sd_mutex_unlock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+	}
+	// SpinLockRelease(spinlock);
 }
 
 void set_ios (mmc_host_t *mmc, mmc_ios_t *ios)
@@ -1378,7 +1434,11 @@ void set_ios (mmc_host_t *mmc, mmc_ios_t *ios)
 			ios->clock, ios->power_mode, ios->bus_width,
 			ios->timing, ios->signal_voltage, ios->drv_type);
 
-	SpinLockAcquire(spinlock);
+	if (0 != sd_mutex_lock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to lock mutex!", __func__);
+	}
+	// SpinLockAcquire(spinlock);
 
 	/* set bus width */
 	host->hcfg &= ~SDHCFG_WIDE_EXT_BUS;
@@ -1394,7 +1454,11 @@ void set_ios (mmc_host_t *mmc, mmc_ios_t *ios)
 
 	mmiowb();
 
-	SpinLockRelease(spinlock);
+	if (0 != sd_mutex_unlock())
+	{
+		LogWrite(From,USPI_LOG_ERROR,"%s: failed to unlock mutex!", __func__);
+	}
+	// SpinLockRelease(spinlock);
 
 	if (!ios->clock || ios->clock != host->clock)
 		set_clock(ios->clock);
