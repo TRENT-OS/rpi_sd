@@ -32,9 +32,8 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
     DeclareCAmkESComponent(
         ${name}
         INCLUDES
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/include
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/include
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/lib
         SOURCES
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/RPI_SD.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/environment.c
@@ -54,7 +53,7 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
             -Werror
         LIBS
             os_core_api
-            os_libs
+            lib_debug
             ${RPI_SD_LIBS}
     )
 

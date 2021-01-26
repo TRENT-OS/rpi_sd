@@ -479,8 +479,8 @@ void read_block_pio(void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				udelay((burst_words - words) *
-				       host->ns_per_fifo_word);
+				// udelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				// ndelay((burst_words - words) *
 				//        host->ns_per_fifo_word);
 				continue;
@@ -562,8 +562,8 @@ void write_block_pio (void)
 					hsts = SDHSTS_REW_TIME_OUT;
 					break;
 				}
-				udelay((burst_words - words) *
-				       host->ns_per_fifo_word);
+				// udelay((burst_words - words) *
+				//        host->ns_per_fifo_word);
 				// ndelay((burst_words - words) *
 				//        host->ns_per_fifo_word);
 				continue;
