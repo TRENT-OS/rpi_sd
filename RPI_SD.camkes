@@ -10,6 +10,60 @@ import <if_OS_Storage.camkes>;
 //------------------------------------------------------------------------------
 // Component declaration
 
+#define SD_COMPONENT_DEFINE( \
+    _type_ \
+    ) \
+    \
+    component _type_ { \
+        uses      if_OS_Timer                timeServer_rpc; \
+        consumes    TimerReady               timeServer_notify; \
+        \
+        provides  if_OS_Storage              storage_rpc; \
+        dataport  Buf                        storage_port; \
+        \
+        has mutex sd_mutex; \
+        \
+        HARDWARE_SD_INTERFACES \
+        \
+        composition { \
+            HARDWARE_SD_COMPOSITION \
+        } \
+        \
+        configuration { \
+            HARDWARE_SD_CONFIG \
+        } \
+    }
+
+// platform specific SD details
+#include "sd_plat_config.camkes"
+
+/*
+* Assign client interface:
+*
+*      SD_INSTANCE_CONNECT_CLIENT(
+*          <instance>,
+*          <storage>.<rpc>, <storage>.<port>
+*      )
+*/
+#define SD_INSTANCE_CONNECT_CLIENT( \
+_inst_, \
+_peer_inst_rpc_, \
+_peer_inst_port_) \
+\
+connection  seL4RPCCall \
+    _inst_ ## _sd_rpc( \
+        from  _peer_inst_rpc_, \
+        to    _inst_.storage_rpc \
+    ); \
+\
+connection  seL4SharedData \
+    _inst_ ## _sd_port( \
+        from  _peer_inst_port_, \
+        to    _inst_.storage_port \
+    );
+
+//------------------------------------------------------------------------------
+
 #define DECLARE_COMPONENT_SYSTIMER_HW(_type_hw_) \
     \
     component systimer_ ## _type_hw_ { \

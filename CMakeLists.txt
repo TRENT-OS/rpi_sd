@@ -6,6 +6,7 @@
 
 cmake_minimum_required(VERSION 3.17)
 
+
 #-------------------------------------------------------------------------------
 # Declare RasPi3 (BCM2837) SPI MSD Driver CAmkES Component
 #       TODO
@@ -18,12 +19,12 @@ cmake_minimum_required(VERSION 3.17)
 #   LIBS <lib_1> <lib_2> ...
 #     additional libraries. At least a TimeServer client library is required
 #
-function(DeclareCAmkESComponent_RPI_SD_DRV name)
+function(SD_DeclareCAmkESComponent name)
 
     cmake_parse_arguments(
         PARSE_ARGV
         1
-        RPI_SD
+        SD
         ""
         ""
         "LIBS"
@@ -32,8 +33,9 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
     DeclareCAmkESComponent(
         ${name}
         INCLUDES
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/lib
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/include
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/lib
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/circle/env/include
         SOURCES
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/RPI_SD.c
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/environment.c
@@ -54,7 +56,19 @@ function(DeclareCAmkESComponent_RPI_SD_DRV name)
         LIBS
             os_core_api
             lib_debug
-            ${RPI_SD_LIBS}
+            platsupport
+            ${SD_LIBS}
+    )
+
+endfunction()
+
+#-------------------------------------------------------------------------------
+# declare CAmkES components for all SDs of a platform
+function(DeclareCAmkESComponents_for_SDs)
+
+    include(
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/plat/${PLATFORM}/CMakeLists.txt"
+        OPTIONAL
     )
 
 endfunction()

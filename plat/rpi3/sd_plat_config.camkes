@@ -1,0 +1,42 @@
+/*
+ *  I2C defaults for platform sabre (i.MX6 based Sabre Lite board)
+ *
+ *  Copyright (C) 2020, Hensoldt Cyber GmbH
+ *
+ */
+
+// use the alias names defined in the device tree
+
+#pragma once
+
+import <std_connector.camkes>;
+import <global-connectors.camkes>;
+
+#define HARDWARE_SD_INTERFACES                    \
+    consumes Dummy systimer;                               \
+    consumes Dummy mailbox;                           \
+    consumes Dummy sd;                                 \
+    consumes Dummy emmc;                              \
+    emits    Dummy dummy_source; 
+
+#define DTB_SD_HW_MAPPING_CONNECTION(_dst_)  \
+    connection seL4DTBHardwareThreadless conn_sd_ ## _dst_( \
+        from dummy_source, \
+        to   _dst_)
+
+#define HARDWARE_SD_COMPOSITION                 \
+    DTB_SD_HW_MAPPING_CONNECTION(sd);       \
+    DTB_SD_HW_MAPPING_CONNECTION(emmc);         \
+    DTB_SD_HW_MAPPING_CONNECTION(systimer);     \
+    DTB_SD_HW_MAPPING_CONNECTION(mailbox);      
+
+#define HARDWARE_SD_CONFIG                                          \
+    systimer.dtb     = dtb({"path":"/soc/timer@7e003000"});         \
+    mailbox.dtb      = dtb({"path":"/soc/mailbox@7e00b880"});       \
+    sd.generate_interrupts = 1;                                     \
+    sd.dma_pool      = 4*40960;                                     \
+    sd.dtb           = dtb({"path":"/soc/mmc@7e202000"});           \
+    emmc.generate_interrupts = 1;                                   \
+    emmc.dtb         = dtb({"path":"/soc/sdhci@7e300000"});
+
+SD_COMPONENT_DEFINE(SD)

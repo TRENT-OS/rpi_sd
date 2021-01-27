@@ -52,7 +52,8 @@ void post_init(void)
 #ifndef USE_SDHOST
     ret = EMMCDevice(emmcBaseReg);
 #else 
-    ret = EMMCDevice(sdBaseReg);
+    // ret = EMMCDevice(sdBaseReg);
+    ret = EMMCDevice((void *)SD.sd);
 #endif
     if(!ret)
     {
