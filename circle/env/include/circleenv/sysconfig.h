@@ -5,7 +5,7 @@
 //
 // Circle - A C++ bare metal environment for Raspberry Pi
 // Copyright (C) 2014-2020  R. Stange <rsta2@o2online.de>
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -23,6 +23,7 @@
 #define _circle_sysconfig_h
 
 #define RASPPI 3
+// #define EMMC_DEBUG2
 ///////////////////////////////////////////////////////////////////////
 //
 // Memory
@@ -279,9 +280,9 @@
 
 #if RASPPI <= 3 && !defined (REALTIME)
 
-#ifndef NO_SDHOST
-#define USE_SDHOST
-#endif
+// #ifndef NO_SDHOST
+// #define USE_SDHOST
+// #endif
 
 #endif
 

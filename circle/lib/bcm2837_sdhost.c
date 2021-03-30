@@ -204,7 +204,7 @@ void SDHostDevice (void *vaddr)
 
 		//SD card pins according to https://elinux.org/RPi_BCM2835_GPIOs
 		bcm2837_gpio_fsel(RPI_GPIO_P48 + i,BCM2837_GPIO_FSEL_ALT0);
-	
+
 		// m_GPIO48_53[i].AssignPin (48+i);
 		// m_GPIO48_53[i].SetMode (GPIOModeAlternateFunction0, FALSE);
 		// m_GPIO48_53[i].SetPullMode (i == 0 ? GPIOPullModeOff : GPIOPullModeUp);
@@ -1414,7 +1414,7 @@ void request (mmc_host_t *mmc, mmc_request_t *mrq)
 		// 	finish_command();
 		// 	print_mmc_host_info();
 		// }
-	} 
+	}
 
 	mmiowb();
 
@@ -1646,7 +1646,7 @@ int sdhost_remove (void)
 
 	DisconnectInterrupt(host->irq);
 	// m_pInterruptSystem->DisconnectIRQ (host->irq);
-	
+
 
 // 	del_timer_sync(&host->timer);
 // 	tasklet_kill(&host->finish_tasklet);

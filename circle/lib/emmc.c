@@ -480,7 +480,7 @@ int EMMCDevice (void *vaddr)
 {
 	m_ullOffset = 0;
 #ifdef USE_SDHOST
-	SDHostDevice (vaddr);	
+	SDHostDevice (vaddr);
 #else
 	m_hci_ver = 0;
 #endif
@@ -488,29 +488,56 @@ int EMMCDevice (void *vaddr)
 	memset(m_pSCR,0,sizeof(TSCR));
 	// assert (m_pSCR != 0);
 
-#ifndef USE_SDHOST
+	bcm2837_gpio_init(gpioBaseReg);
 
-#if RASPPI >= 2
-	// workaround if bootloader does not restore GPIO modes
-	if (GetMachineModel () == MachineModel3B
-	    || GetMachineModel () == MachineModel3APlus
-	    || GetMachineModel () == MachineModel3BPlus)
+	for (unsigned i = 0; i <= 5; i++)
 	{
-		bcm2837_gpio_init(vaddr);
-
-		for (unsigned i = 0; i <= 5; i++)
-		{
-			// m_GPIO34_39[i].AssignPin (34+i);
-			// m_GPIO34_39[i].SetMode (GPIOModeInput, FALSE);
-
-			bcm2837_gpio_fsel(RPI_GPIO_P48 + i,BCM2837_GPIO_FSEL_ALT3);
-			// m_GPIO48_53[i].AssignPin (48+i);
-			// m_GPIO48_53[i].SetMode (GPIOModeAlternateFunction3, FALSE);
-		}
+		bcm2837_gpio_fsel(RPI_GPIO_P34 + i, BCM2837_GPIO_FSEL_INPT);
+		bcm2837_gpio_fsel(RPI_GPIO_P48 + i, BCM2837_GPIO_FSEL_INPT);
 	}
-#endif
 
-#endif
+
+	for (unsigned i = 0; i <= 5; i++)
+	{
+		// m_GPIO34_39[i].AssignPin (34+i);
+		// m_GPIO34_39[i].SetMode (GPIOModeInput, FALSE);
+
+		// bcm2837_gpio_fsel(RPI_GPIO_P34 + i,BCM2837_GPIO_FSEL_ALT0);
+		bcm2837_gpio_fsel(RPI_GPIO_P48 + i,BCM2837_GPIO_FSEL_ALT3);
+		// m_GPIO48_53[i].AssignPin (48+i);
+		// m_GPIO48_53[i].SetMode (GPIOModeAlternateFunction3, FALSE);
+	}
+// #ifndef USE_SDHOST
+
+// #if RASPPI >= 2
+// 	// workaround if bootloader does not restore GPIO modes
+// 	if (GetMachineModel () == MachineModel3B
+// 	    || GetMachineModel () == MachineModel3APlus
+// 	    || GetMachineModel () == MachineModel3BPlus)
+// 	{
+// 		bcm2837_gpio_init(vaddr);
+
+// 		for (unsigned i = 0; i <= 5; i++)
+// 		{
+// 			bcm2837_gpio_fsel(RPI_GPIO_P34 + i, BCM2837_GPIO_FSEL_INPT);
+// 			bcm2837_gpio_fsel(RPI_GPIO_P48 + i, BCM2837_GPIO_FSEL_INPT);
+// 		}
+
+
+// 		for (unsigned i = 0; i <= 5; i++)
+// 		{
+// 			// m_GPIO34_39[i].AssignPin (34+i);
+// 			// m_GPIO34_39[i].SetMode (GPIOModeInput, FALSE);
+
+// 			// bcm2837_gpio_fsel(RPI_GPIO_P34 + i,BCM2837_GPIO_FSEL_ALT0);
+// 			bcm2837_gpio_fsel(RPI_GPIO_P48 + i,BCM2837_GPIO_FSEL_ALT3);
+// 			// m_GPIO48_53[i].AssignPin (48+i);
+// 			// m_GPIO48_53[i].SetMode (GPIOModeAlternateFunction3, FALSE);
+// 		}
+// 	}
+// #endif
+
+// #endif
 	return TRUE;
 }
 
@@ -648,7 +675,7 @@ int emmc_write (const void *pBuffer, size_t nCount)
 u64 emmc_seek (u64 ullOffset)
 {
 	m_ullOffset = ullOffset;
-	
+
 	return m_ullOffset;
 }
 
@@ -671,6 +698,57 @@ void PowerOff (void)
 // 	DataMemBarrier ();
 
 // 	return nResult;
+// }
+
+int fls_long (unsigned long x) {
+     int r = 32;
+     if (!x)  return 0;
+     if (!(x & 0xffff0000u)) {
+         x <<= 16;
+         r -= 16;
+     }
+     if (!(x & 0xff000000u)) {
+       x <<= 8;
+       r -= 8;
+    }
+    if (!(x & 0xf0000000u)) {
+      x <<= 4;
+      r -= 4;
+   }
+   if (!(x & 0xc0000000u)) {
+      x <<= 2;
+      r -= 2;
+   }
+   if (!(x & 0x80000000u)) {
+     x <<= 1;
+     r -= 1;
+   }
+   return r;
+}
+
+// u32 GetClockDivider (u32 base_clock, u32 target_rate)
+// {
+// 	uint32_t divisor;
+// 	uint32_t closest = 41666666 / target_rate;					// Pi SD frequency is always 41.66667Mhz on baremetal
+// 	uint32_t shiftcount = fls_long(closest - 1);		// Get the raw shiftcount
+// 	if (shiftcount > 0) shiftcount--;					// Note the offset of shift by 1 (look at the spec)
+// 	if (shiftcount > 7) shiftcount = 7;					// It's only 8 bits maximum on HOST_SPEC_V2
+// 	// if (sdHostVer > HOST_SPEC_V2) divisor = closest;	// Version 3 take closest
+// 	// 	else divisor = (1 << shiftcount);				// Version 2 take power 2
+
+// 	divisor = (1 << shiftcount);
+
+// 	if (divisor <= 2) {									// Too dangerous to go for divisor 1 unless you test
+// 		divisor = 2;									// You can't take divisor below 2 on slow cards
+// 		shiftcount = 0;									// Match shift to above just for debug notification
+// 	}
+
+// 	printf("Divisor selected = %d, pow 2 shift count = %d\n", divisor, shiftcount);
+// 	uint32_t hi = 0;
+// 	// if (sdHostVer > HOST_SPEC_V2) hi = (divisor & 0x300) >> 2; // Only 10 bits on Hosts specs above 2
+//     uint32_t lo = (divisor & 0x0ff);					// Low part always valid
+//     uint32_t cdiv = (lo << 8) + hi;						// Join and roll to position
+// 	return cdiv;
 // }
 
 // Set the clock dividers to generate a target value
@@ -884,7 +962,7 @@ void IssueCommandInt (u32 cmd_reg, u32 argument, int timeout)
 	// Set command reg
 	write32 (EMMC_CMDTM, cmd_reg);
 
-	//usDelay (2000);
+	usDelay (2000);
 
 	// Wait for command complete interrupt
 	TimeoutWait (EMMC_INTERRUPT, 0x8001, 1, timeout);
@@ -905,7 +983,7 @@ void IssueCommandInt (u32 cmd_reg, u32 argument, int timeout)
 		return;
 	}
 
-	//usDelay (2000);
+	usDelay (2000);
 
 	// Get response data
 	switch (cmd_reg & SD_CMD_RSPNS_TYPE_MASK)
@@ -1211,7 +1289,7 @@ void IssueCommandInt (u32 cmd_reg, u32 argument, int timeout)
 
 		Cmd.data = &Data;
 	}
-	
+
 	int nError = mmc_host_Command(&Cmd,0);
 	if (nError != 0)
 	{
@@ -1370,7 +1448,7 @@ int CardReset (void)
 		return -1;
 	}
 #ifdef EMMC_DEBUG2
-	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x, control2: %08x", 
+	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x, control2: %08x",
 				read32 (EMMC_CONTROL0), read32 (EMMC_CONTROL1), read32 (EMMC_CONTROL2));
 #endif
 
@@ -1398,8 +1476,8 @@ int CardReset (void)
 	LogWrite (FromEMMC, USPI_LOG_DEBUG, "status: %08x", status_reg);
 #endif
 
-	// Clear control2
-	write32 (EMMC_CONTROL2, 0);
+	// // Clear control2
+	// write32 (EMMC_CONTROL2, 0);
 
 	// Get the base clock rate
 	u32 base_clock = GetBaseClock ();
@@ -1413,6 +1491,7 @@ int CardReset (void)
 #ifdef EMMC_DEBUG2
 	LogWrite (FromEMMC, USPI_LOG_DEBUG, "setting clock rate");
 #endif
+
 	control1 = read32 (EMMC_CONTROL1);
 	control1 |= 1;			// enable clock
 
@@ -1426,6 +1505,7 @@ int CardReset (void)
 	}
 	control1 |= f_id;
 
+	// first set all data timeout counter value bits to 0 and then set them.
 	// was not masked out and or'd with (7 << 16) in original driver
 	control1 &= ~(0xF << 16);
 	control1 |= (11 << 16);		// data timeout = TMCLK * 2^24
@@ -1439,7 +1519,7 @@ int CardReset (void)
 		return -1;
 	}
 #ifdef EMMC_DEBUG2
-	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x", 
+	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x",
 				read32(EMMC_CONTROL0), read32(EMMC_CONTROL1));
 #endif
 
@@ -1453,6 +1533,10 @@ int CardReset (void)
 	write32 (EMMC_CONTROL1, control1);
 	usDelay (2000);
 
+#ifdef EMMC_DEBUG2
+	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x",
+				read32(EMMC_CONTROL0), read32(EMMC_CONTROL1));
+#endif
 	// Mask off sending interrupts to the ARM
 	write32 (EMMC_IRPT_EN, 0);
 	// Reset interrupts
@@ -1509,7 +1593,7 @@ int CardReset (void)
 	m_base_clock = 0;
 #endif
 	// << Prepare the device structure
-	
+
 #ifndef USE_SDHOST
 	m_base_clock = base_clock;
 #endif
@@ -1680,95 +1764,6 @@ int CardReset (void)
 	// A small wait before the voltage switch
 	usDelay (5000);
 
-#ifndef USE_SDHOST
-
-	// Switch to 1.8V mode if possible
-	if (m_card_supports_18v)
-	{
-#ifdef EMMC_DEBUG2
-		LogWrite (FromEMMC, USPI_LOG_DEBUG, "switching to 1.8V mode");
-#endif
-		// As per HCSS 3.6.1
-
-		// Send VOLTAGE_SWITCH
-		if (!IssueCommand(VOLTAGE_SWITCH, 0, 500000))
-		{
-#ifdef EMMC_DEBUG
-			LogWrite (FromEMMC, USPI_LOG_DEBUG, "error issuing VOLTAGE_SWITCH");
-#endif
-			m_failed_voltage_switch = 1;
-			PowerOff();
-
-			return CardReset ();
-		}
-
-		// Disable SD clock
-		control1 = read32(EMMC_CONTROL1);
-		control1 &= ~(1 << 2);
-		write32(EMMC_CONTROL1, control1);
-
-		// Check DAT[3:0]
-		status_reg = read32 (EMMC_STATUS);
-		u32 dat30 = (status_reg >> 20) & 0xf;
-		if (dat30 != 0)
-		{
-#ifdef EMMC_DEBUG
-			LogWrite (FromEMMC, USPI_LOG_DEBUG, "DAT[3:0] did not settle to 0");
-#endif
-			m_failed_voltage_switch = 1;
-			PowerOff();
-
-			return CardReset ();
-		}
-
-		// Set 1.8V signal enable to 1
-		u32 control0 = read32(EMMC_CONTROL0);
-		control0 |= (1 << 8);
-		write32(EMMC_CONTROL0, control0);
-
-		// Wait 5 ms
-		usDelay (5000);
-
-		// Check the 1.8V signal enable is set
-		control0 = read32(EMMC_CONTROL0);
-		if(((control0 >> 8) & 1) == 0)
-		{
-#ifdef EMMC_DEBUG
-			LogWrite (FromEMMC, USPI_LOG_DEBUG, "controller did not keep 1.8V signal enable high");
-#endif
-			m_failed_voltage_switch = 1;
-			PowerOff();
-
-			return CardReset ();
-		}
-
-		// Re-enable the SD clock
-		control1 = read32(EMMC_CONTROL1);
-		control1 |= (1 << 2);
-		write32(EMMC_CONTROL1, control1);
-
-		usDelay (10000);
-
-		// Check DAT[3:0]
-		status_reg = read32 (EMMC_STATUS);
-		dat30 = (status_reg >> 20) & 0xf;
-		if (dat30 != 0xf)
-		{
-#ifdef EMMC_DEBUG
-			LogWrite (FromEMMC, USPI_LOG_DEBUG, "DAT[3:0] did not settle to 1111b (%01x)", dat30);
-#endif
-			m_failed_voltage_switch = 1;
-			PowerOff();
-
-			return CardReset ();
-		}
-
-#ifdef EMMC_DEBUG2
-		LogWrite (FromEMMC, USPI_LOG_DEBUG, "voltage switch complete");
-#endif
-	}
-
-#endif	// #ifndef USE_SDHOST
 	// Send CMD2 to get the cards CID
 	if (!IssueCommand (ALL_SEND_CID, 0, 500000))
 	{
@@ -1848,7 +1843,7 @@ int CardReset (void)
 	// // A small wait before the voltage switch
 	// usDelay (5000);
 //---------------------------------------------------------------------------------------
-	
+
 	// Calculate the capacity of the card before switching to transfer mode
 	_capacity = emmc_capacity();
 	LogWrite(FromEMMC, USPI_LOG_DEBUG, "Card Capacity: %lld Bytes",_capacity);
@@ -2352,7 +2347,7 @@ off_t emmc_capacity(void){
 	off_t hc_c_size;
 
 	if(_capacity > 0) return _capacity;
-	
+
     // CMD9, Response R2 (R1 byte + 16-byte block read)
 	if (!IssueCommand (SEND_CSD, m_card_rca << 16, 500000))
 	{
@@ -2365,17 +2360,17 @@ off_t emmc_capacity(void){
 	csd[1] = m_last_r3 >> 16;
 	csd[2] = m_last_r3 >> 8;
 	csd[3] = m_last_r3 >> 0;
-	
+
 	csd[4] = m_last_r2 >> 24;
 	csd[5] = m_last_r2 >> 16;
 	csd[6] = m_last_r2 >> 8;
 	csd[7] = m_last_r2 >> 0;
-	
+
 	csd[8] = m_last_r1 >> 24;
 	csd[9] = m_last_r1 >> 16;
 	csd[10] = m_last_r1 >> 8;
 	csd[11] = m_last_r1 >> 0;
-	
+
 	csd[12] = m_last_r0 >> 24;
 	csd[13] = m_last_r0 >> 16;
 	csd[14] = m_last_r0 >> 8;

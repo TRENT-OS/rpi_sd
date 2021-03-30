@@ -24,6 +24,13 @@ import <if_OS_Storage.camkes>;
         dataport Buf mailboxBaseReg; \
     }
 
+#define DECLARE_COMPONENT_GPIO_HW(_type_hw_) \
+    \
+    component gpio_ ## _type_hw_ { \
+        hardware; \
+        dataport Buf gpioBaseReg; \
+    }
+
 #define DECLARE_COMPONENT_SDHOST_HW(_type_hw_) \
     \
     component sdBase_ ## _type_hw_ { \
@@ -43,6 +50,7 @@ import <if_OS_Storage.camkes>;
 #define DECLARE_COMPONENT_RPI_SD_DRV(_type_) \
     component _type_ { \
         dataport Buf mailboxBaseReg; \
+        dataport Buf gpioBaseReg; \
         dataport Buf sdBaseReg; \
         consumes DataAvailable sdBaseIrq; \
         dataport Buf emmcBaseReg; \
@@ -67,6 +75,8 @@ import <if_OS_Storage.camkes>;
     _inst_hw_mb_, \
     _type_hw_sd_, \
     _inst_hw_sd_, \
+    _type_hw_gpio_, \
+    _inst_hw_gpio_, \
     _type_hw_emmc_, \
     _inst_hw_emmc_, \
     _type_hw_st_, \
@@ -76,6 +86,7 @@ import <if_OS_Storage.camkes>;
     \
     component   mailbox_ ## _type_hw_mb_   _inst_hw_mb_; \
     component   sdBase_ ## _type_hw_sd_   _inst_hw_sd_; \
+    component   gpio_ ## _type_hw_gpio_   _inst_hw_gpio_; \
     component   emmcBase_ ## _type_hw_emmc_   _inst_hw_emmc_; \
     component   systimer_ ## _type_hw_st_   _inst_hw_st_; \
     component   _type_drv_          _inst_drv_; \
@@ -87,6 +98,10 @@ import <if_OS_Storage.camkes>;
     connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_sd_ ## _mmio( \
                 from _inst_drv_.sdBaseReg, \
                 to   _inst_hw_sd_.sdBaseReg); \
+    \
+    connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_gpio_ ## _mmio( \
+                from _inst_drv_.gpioBaseReg, \
+                to   _inst_hw_gpio_.gpioBaseReg); \
     \
     connection  seL4HardwareMMIO       _inst_drv_ ## _inst_hw_emmc_ ## _mmio( \
                 from _inst_drv_.emmcBaseReg, \
@@ -123,6 +138,14 @@ import <if_OS_Storage.camkes>;
     _inst_hw_.mailboxBaseReg_paddr  = _phys_addr_; \
     _inst_hw_.mailboxBaseReg_size   = _size_; \
 
+#define CONFIGURE_INSTANCE_GPIO_HW( \
+            _inst_hw_, \
+            _phys_addr_, \
+            _size_) \
+    \
+    _inst_hw_.gpioBaseReg_paddr  = _phys_addr_; \
+    _inst_hw_.gpioBaseReg_size   = _size_; \
+
 /* SD Host interrupt is marked as 24 (0x18) and 2 (0x02), the latter one works, but according to line to the seL4 BCM2837 interrupt handling, the normal IRQs start from 64 => 64 + 2 = 66 */ \
 #define CONFIGURE_INSTANCE_SDHOST_HW( \
             _inst_hw_, \
@@ -149,4 +172,4 @@ import <if_OS_Storage.camkes>;
             _inst_drv_, \
             _dma_size_) \
     \
-    _inst_drv_.dma_pool  = _dma_size_; 
+    _inst_drv_.dma_pool  = _dma_size_;

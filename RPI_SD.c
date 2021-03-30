@@ -51,7 +51,7 @@ void post_init(void)
     int ret = 0;
 #ifndef USE_SDHOST
     ret = EMMCDevice(emmcBaseReg);
-#else 
+#else
     ret = EMMCDevice(sdBaseReg);
 #endif
     if(!ret)
@@ -83,7 +83,7 @@ void emmcBaseIrq_handle(void) {
 void sdBaseIrq_handle(void) {
 #ifndef USE_SDHOST
     Debug_LOG_INFO("Using EMMC mode. -> no SDHost IRQ handle configured.");
-#else 
+#else
     irq_stub(NULL);
 #endif
 
@@ -223,7 +223,7 @@ storage_rpc_read(
     Debug_LOG_DEBUG(
         "EMMC read: offset %jd (0x%jx), size %zu (0x%zx)",
         offset, offset, size, size);
-    
+
     if(!init_ok)
     {
         emmc_init();
@@ -257,9 +257,9 @@ storage_rpc_read(
     {
         uint8_t block[emmc_block_size()];
         memset(block,0,emmc_block_size());
-        
+
         uint32_t sector = offset / emmc_block_size();
-        
+
         //read first block and copy according bytes to dataport
         // ret = disk_read(&(ctx.spi_sd_ctx),block,sector,1);
         ret = DoRead(block,emmc_block_size(),sector);
@@ -270,11 +270,11 @@ storage_rpc_read(
         }
         size_t nbr_of_bytes = size <= (emmc_block_size() - (offset - sector * emmc_block_size())) ? size : (emmc_block_size() - (offset - sector * emmc_block_size()));
         memcpy(OS_Dataport_getBuf(port_storage),block + (offset - sector * emmc_block_size()),nbr_of_bytes);
-   
+
         bytesRead += nbr_of_bytes;
         size -= nbr_of_bytes;
-    
-        //read the remaining blocks and copy into dataport 
+
+        //read the remaining blocks and copy into dataport
         while (size > emmc_block_size())
         {
             // ret = disk_read(&(ctx.spi_sd_ctx),block,++sector,1);
@@ -304,7 +304,7 @@ storage_rpc_read(
             size -= size;
         }
     }
-    
+
     *read = bytesRead;
 
     return OS_SUCCESS;
@@ -355,7 +355,7 @@ storage_rpc_erase(
     if(size > 0){
         uint8_t block[emmc_block_size()];
         memset(block,0,emmc_block_size());
-        
+
         uint32_t sector = offset / emmc_block_size();
         //read first block, adjust according bytes and erase block
         // ret = disk_read(&(ctx.spi_sd_ctx),block,sector,1);
@@ -374,10 +374,10 @@ storage_rpc_erase(
                                 offset, offset, bytesErased, bytesErased, ret);
             return OS_ERROR_GENERIC;
         }
-        
+
         bytesErased += nbr_of_bytes;
         size -= nbr_of_bytes;
-        
+
         //erase the remaining blocks
         while (size > emmc_block_size())
         {
@@ -415,7 +415,7 @@ storage_rpc_erase(
             size -= size;
         }
     }
-    
+
     *erased = bytesErased;
 
     return OS_SUCCESS;
@@ -438,7 +438,7 @@ storage_rpc_getSize(
 
 OS_Error_t
 storage_rpc_getBlockSize(
-    size_t* blockSize    
+    size_t* blockSize
 )
 {
     *blockSize = emmc_block_size();
@@ -456,6 +456,6 @@ storage_rpc_getState(
     {
         *flags = 1;
     }
-    
+
     return OS_SUCCESS;
 }
