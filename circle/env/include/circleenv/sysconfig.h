@@ -280,9 +280,9 @@
 
 #if RASPPI <= 3 && !defined (REALTIME)
 
-// #ifndef NO_SDHOST
-// #define USE_SDHOST
-// #endif
+#ifndef NO_SDHOST
+#define USE_SDHOST
+#endif
 
 #endif
 

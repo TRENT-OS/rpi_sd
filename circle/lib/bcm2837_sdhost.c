@@ -194,7 +194,8 @@ void SDHostDevice (void *vaddr)
 	MMCHost();
 	SpinLock(spinlock,IRQ_LEVEL);
 
-    bcm2837_gpio_init(vaddr);
+    // bcm2837_gpio_init(vaddr);
+	bcm2837_gpio_init(gpioBaseReg);
 
 	for (unsigned i = 0; i <= 5; i++)
 	{
