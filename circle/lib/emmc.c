@@ -480,7 +480,7 @@ int EMMCDevice (void *vaddr)
 {
 	m_ullOffset = 0;
 #ifdef USE_SDHOST
-	SDHostDevice (vaddr);	
+	SDHostDevice (vaddr);
 #else
 	m_hci_ver = 0;
 #endif
@@ -651,7 +651,7 @@ int emmc_write (const void *pBuffer, size_t nCount)
 u64 emmc_seek (u64 ullOffset)
 {
 	m_ullOffset = ullOffset;
-	
+
 	return m_ullOffset;
 }
 
@@ -1214,7 +1214,7 @@ void IssueCommandInt (u32 cmd_reg, u32 argument, int timeout)
 
 		Cmd.data = &Data;
 	}
-	
+
 	int nError = mmc_host_Command(&Cmd,0);
 	if (nError != 0)
 	{
@@ -1373,7 +1373,7 @@ int CardReset (void)
 		return -1;
 	}
 #ifdef EMMC_DEBUG2
-	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x, control2: %08x", 
+	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x, control2: %08x",
 				read32 (EMMC_CONTROL0), read32 (EMMC_CONTROL1), read32 (EMMC_CONTROL2));
 #endif
 
@@ -1442,7 +1442,7 @@ int CardReset (void)
 		return -1;
 	}
 #ifdef EMMC_DEBUG2
-	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x", 
+	LogWrite (FromEMMC, USPI_LOG_DEBUG, "control0: %08x, control1: %08x",
 				read32(EMMC_CONTROL0), read32(EMMC_CONTROL1));
 #endif
 
@@ -1512,7 +1512,7 @@ int CardReset (void)
 	m_base_clock = 0;
 #endif
 	// << Prepare the device structure
-	
+
 #ifndef USE_SDHOST
 	m_base_clock = base_clock;
 #endif
@@ -1851,7 +1851,7 @@ int CardReset (void)
 	// A small wait before the voltage switch
 	usDelay (5000);
 //---------------------------------------------------------------------------------------
-	
+
 	// Calculate the capacity of the card before switching to transfer mode
 	_capacity = emmc_capacity();
 	LogWrite(FromEMMC, USPI_LOG_DEBUG, "Card Capacity: %lld Bytes",_capacity);
@@ -2348,13 +2348,10 @@ static uint32_t ext_bits(unsigned char *data, int msb, int lsb) {
 }
 
 off_t emmc_capacity(void){
-    uint32_t c_size, c_size_mult, read_bl_len;
-    uint32_t block_len, mult, blocknr, capacity;
-    off_t blocks;
-	off_t hc_c_size;
+	off_t c_size, c_size_mult, read_bl_len;
 
 	if(_capacity > 0) return _capacity;
-	
+
     // CMD9, Response R2 (R1 byte + 16-byte block read)
 	if (!IssueCommand (SEND_CSD, m_card_rca << 16, 500000))
 	{
@@ -2362,31 +2359,33 @@ off_t emmc_capacity(void){
 		return -1;
 	}
 
+#if RASPPI > 3
+	m_last_r3 = ((m_last_r3 << 8) | (m_last_r2 >> 24));
+    m_last_r2 = ((m_last_r2 << 8) | (m_last_r1 >> 24));
+    m_last_r1 = ((m_last_r1 << 8) | (m_last_r0 >> 24));
+    m_last_r0 = (m_last_r0 << 8);
+#endif
+
 	uint8_t csd[16];
 	csd[0] = m_last_r3 >> 24;
 	csd[1] = m_last_r3 >> 16;
 	csd[2] = m_last_r3 >> 8;
 	csd[3] = m_last_r3 >> 0;
-	
+
 	csd[4] = m_last_r2 >> 24;
 	csd[5] = m_last_r2 >> 16;
 	csd[6] = m_last_r2 >> 8;
 	csd[7] = m_last_r2 >> 0;
-	
+
 	csd[8] = m_last_r1 >> 24;
 	csd[9] = m_last_r1 >> 16;
 	csd[10] = m_last_r1 >> 8;
 	csd[11] = m_last_r1 >> 0;
-	
+
 	csd[12] = m_last_r0 >> 24;
 	csd[13] = m_last_r0 >> 16;
 	csd[14] = m_last_r0 >> 8;
 	csd[15] = m_last_r0 >> 0;
-	// u32 csd[4];
-	// csd[0] = m_last_r0;
-	// csd[1] = m_last_r1;
-	// csd[2] = m_last_r2;
-	// csd[3] = m_last_r3;
 
     // CSD = Card Specific Data
     // csd_structure : csd[127:126]
@@ -2395,30 +2394,33 @@ off_t emmc_capacity(void){
     // read_bl_len   : csd[83:80] - the *maximum* read block length
 
     int csd_structure = ext_bits(csd, 127, 126);
-	// printf("\n\n\n CSD structure: %d \n\n\n",csd_structure);
 
+    if (csd_structure == 0) {
+        LogWrite(FromEMMC,USPI_LOG_DEBUG,"CSD Version 1.0");
+        c_size      = ext_bits(csd,73,62);
+        c_size_mult = ext_bits(csd,49,47);
+		read_bl_len = ext_bits(csd,83,80);
+		// tran_speed 	= ext_bits(csd,103,96);
+    } else if (csd_structure == 1) {
+        LogWrite(FromEMMC,USPI_LOG_DEBUG,"CSD Version 2.0");
+		c_size 		= ext_bits(csd,69,48);
+		c_size_mult = 0;
+		read_bl_len = ext_bits(csd,83,80);
+		// tran_speed  = ext_bits(csd,103,96);
+    } else {
+        LogWrite(FromEMMC,USPI_LOG_ERROR,"Unknown CSD version!");
+        return -1;
+    }
     switch (csd_structure) {
-        case 0:
-            c_size = ext_bits(csd, 73, 62);
-            c_size_mult = ext_bits(csd, 49, 47);
-            read_bl_len = ext_bits(csd, 83, 80);
-
-            block_len = 1 << read_bl_len;
-            mult = 1 << (c_size_mult + 2);
-            blocknr = (c_size + 1) * mult;
-            capacity = blocknr * block_len;
-			blocks = capacity / SD_BLOCK_SIZE;
-            return capacity;
-            break;
-
-        case 1:
-			hc_c_size = ext_bits(csd, 69, 48);
-            blocks = (hc_c_size+1)*1024;
-			return blocks * SD_BLOCK_SIZE;
-            break;
-
-        default:
-            printf("CSD struct unsupported\r\n");
-            return 0;
+		case 0: {
+			return (c_size + 1) * (1U << (c_size_mult + 2))
+				* (1U << read_bl_len);
+		}
+		case 1: {
+			return (c_size + 1) * 512 * 1024;
+		}
+		default: {
+			return 0;
+		}
     }
 }
